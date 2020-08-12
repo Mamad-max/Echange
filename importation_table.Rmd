@@ -1,0 +1,420 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(readr)
+library(tidyverse)
+library(ggplot2)
+```
+
+
+######modifier le chemin 
+
+
+
+```{r}
+
+base_client <- read_delim("C:/Users/alpha/OneDrive/Bureau/Avisia/traitement_R/Base_client_full.txt", 
+    ";", escape_double = FALSE,  col_types = cols(apres_midi = col_number(), 
+        matin = col_number(), midi = col_number(), 
+        soir = col_number(), weekend = col_number(),
+        
+      semaine= col_number()
+      ,Lundi= col_number()
+      ,Mardi= col_number()
+      ,Mercredi= col_number()
+      ,Jeudi= col_number()
+      ,Vendredi= col_number()
+      ,printemps= col_number()
+      ,ete= col_number()
+      ,automne= col_number()
+      ,hiver= col_number()
+        
+        ), na="NA", trim_ws = TRUE)
+
+
+```
+#verification s'il ya des valeurs manquantes: si on a bien importer le jeu de données avec le na
+```{r}
+
+sum(is.na(base_client))
+```
+
+#remplacement des na par 0 (Champ des jours lundi mardi mercredi...)
+```{r}
+
+base_client[is.na(base_client)] <-0
+
+```
+
+Sous tableau de la base client afin d'optimiser l'execution
+```{r}
+test<-head(base_client,100)
+
+```
+#creation du champ majoritaire (secteur et groupe) en part d'article
+```{r}
+
+test<-test %>% mutate(
+  
+  
+  #secteur article
+  part_article_alim=article_alim/nb_articles,
+  part_article_nalim=article_nalim/nb_articles,
+  part_article_uf1=article_uf1/nb_articles,
+  part_article_fl=article_fl/nb_articles,
+  
+  #groupe article
+  part_article_bien_etre=article_bien_etre/article_plateforme,
+  part_article_creme=article_creme/article_plateforme,
+  part_article_ep_sa=article_ep_sa/article_plateforme,                      
+  part_article_ep_su=article_ep_su/article_plateforme,
+  part_article_liquide=article_liquide/article_plateforme,
+  part_article_surgele=article_surgele/article_plateforme,
+  part_article_uf2=article_uf2/article_plateforme,
+  part_article_vrac=article_vrac/article_plateforme,
+  part_article_maman_bebe=article_maman_bebe/article_plateforme,
+  part_article_hors_maman_bebe=article_hors_maman_bebe/article_plateforme,
+  part_article_animaux=article_animaux/article_plateforme,
+  part_article_hors_animaux=article_hors_animaux/article_plateforme,
+  part_article_pdt_sans=article_pdt_sans/article_plateforme,
+  part_article_pate=article_pate/article_plateforme,
+  part_article_boulangerie=article_boulangerie/article_plateforme,
+  part_article_poisson=article_poisson/article_plateforme,
+  part_article_viande=article_viande/article_plateforme,
+  part_article_vegetale=article_vegetale/article_plateforme,
+  part_article_autre_traiteur=article_autre_traiteur/article_plateforme
+  
+  )
+
+
+test<- mutate(test,Secteur_majoritaire=case_when(part_article_alim==1  ~"Appetent uniquement Alimentaire",
+                                                       part_article_alim<1 & part_article_alim>part_article_nalim & 
+                                                        part_article_alim>part_article_uf1 &
+                                                        part_article_alim>part_article_fl  ~ "Majoritairement Alimentaire" , 
+                                                  
+                                                   part_article_nalim==1  ~"Appetent uniquement  non alimentaire",
+                                                    part_article_nalim<1 & part_article_nalim>part_article_alim & part_article_nalim>part_article_uf1 & 
+                                                        part_article_nalim>part_article_fl  ~ "Majoritairement non alimentaire" , 
+                                                   
+                                                   part_article_uf1==1  ~"Appetent uniquement  ultra frais 1",
+                                                    part_article_uf1<1 & part_article_uf1>part_article_nalim & part_article_uf1>part_article_alim & 
+                                                        part_article_uf1>part_article_fl ~ "Majoritairement ultras frais" , 
+
+                                                  part_article_fl==1  ~ "Appetent uniquement fruit et legume",
+                                                    part_article_fl<1 & part_article_fl>part_article_nalim & part_article_fl>part_article_uf1 & 
+                                                        part_article_fl>part_article_alim ~ "Majoritairement fruit et legume" , 
+                                                   TRUE  ~ 'Aucune appetence')
+                    ,Groupe_majoritaire=case_when(
+part_article_bien_etre==1 ~"Appetent uniquement bien etre",
+part_article_bien_etre<1 & part_article_bien_etre>part_article_creme & part_article_bien_etre>part_article_ep_su & part_article_bien_etre>part_article_ep_sa & part_article_bien_etre>part_article_liquide &  part_article_bien_etre>part_article_surgele & part_article_bien_etre>part_article_uf2 & part_article_bien_etre>part_article_vrac & part_article_bien_etre>part_article_maman_bebe &
+part_article_bien_etre>part_article_hors_maman_bebe &
+part_article_bien_etre>part_article_animaux & part_article_bien_etre>part_article_hors_animaux & part_article_bien_etre>part_article_pdt_sans & part_article_bien_etre>part_article_pate & part_article_bien_etre>part_article_boulangerie & 
+  part_article_bien_etre>part_article_poisson &
+part_article_bien_etre>part_article_viande & part_article_bien_etre>part_article_vegetale & part_article_bien_etre>part_article_autre_traiteur ~"Majoritairement bien etre",
+
+part_article_creme==1 ~"Appetent uniquement creme",
+part_article_creme<1 & part_article_creme>part_article_bien_etre & part_article_creme>part_article_ep_su & part_article_creme>part_article_ep_sa & part_article_creme>part_article_liquide & part_article_creme>part_article_surgele & part_article_creme>part_article_uf2 & part_article_creme>part_article_vrac & part_article_creme>part_article_maman_bebe &
+part_article_creme>part_article_hors_maman_bebe &
+part_article_creme>part_article_animaux & part_article_creme>part_article_hors_animaux & part_article_creme>part_article_pdt_sans & part_article_creme>part_article_pate & 
+  part_article_creme>part_article_boulangerie & 
+  part_article_creme>part_article_poisson &
+part_article_creme>part_article_viande & part_article_creme>part_article_vegetale & part_article_creme>part_article_autre_traiteur  ~ "Majoritairement creme",
+
+
+part_article_ep_su==1 ~"Appetent uniquement epecerie sucree",
+part_article_ep_su<1 & part_article_ep_su>part_article_creme & part_article_ep_su>part_article_bien_etre & part_article_ep_su>part_article_ep_sa & part_article_ep_su>part_article_liquide & part_article_ep_su>part_article_surgele & part_article_ep_su>part_article_uf2 & part_article_ep_su>part_article_vrac & part_article_ep_su>part_article_maman_bebe &
+part_article_ep_su>part_article_hors_maman_bebe &
+part_article_ep_su>part_article_animaux & part_article_ep_su>part_article_hors_animaux & part_article_ep_su>part_article_pdt_sans & part_article_ep_su>part_article_pate & 
+  part_article_ep_su>part_article_boulangerie & 
+  part_article_ep_su>part_article_poisson &
+part_article_ep_su>part_article_viande & part_article_ep_su>part_article_vegetale & part_article_ep_su>part_article_autre_traiteur  ~ "Majoritairement epecerie sucree",
+
+part_article_ep_sa==1 ~"appetent uniquement epicerie salee",
+part_article_ep_sa<1 & part_article_ep_sa>part_article_creme & part_article_ep_sa>part_article_bien_etre & part_article_ep_sa>part_article_ep_su & part_article_ep_sa>part_article_liquide &
+
+part_article_ep_sa>part_article_surgele & part_article_ep_sa>part_article_uf2 & part_article_ep_sa>part_article_vrac & part_article_ep_sa>part_article_maman_bebe &
+part_article_ep_sa>part_article_hors_maman_bebe &
+part_article_ep_sa>part_article_animaux & part_article_ep_sa>part_article_hors_animaux & part_article_ep_sa>part_article_pdt_sans & part_article_ep_sa>part_article_pate & 
+  part_article_ep_sa>part_article_boulangerie & 
+  part_article_ep_sa>part_article_poisson &
+part_article_ep_sa>part_article_viande & part_article_ep_sa>part_article_vegetale & part_article_ep_sa>part_article_autre_traiteur  ~ "Majoritairement epecerie salee",
+
+
+
+
+
+part_article_liquide==1 ~"Appetent uniquement liquide",
+part_article_liquide<1 & part_article_liquide>part_article_creme & part_article_liquide>part_article_bien_etre & part_article_liquide>part_article_ep_su & part_article_liquide>part_article_ep_sa &
+
+part_article_liquide>part_article_surgele & part_article_liquide>part_article_uf2 & part_article_liquide>part_article_vrac & part_article_liquide>part_article_maman_bebe &
+part_article_liquide>part_article_hors_maman_bebe &
+part_article_liquide>part_article_animaux & part_article_liquide>part_article_hors_animaux & part_article_liquide>part_article_pdt_sans & part_article_liquide>part_article_pate & part_article_liquide>part_article_boulangerie & 
+  part_article_liquide>part_article_poisson &
+part_article_liquide>part_article_viande & part_article_liquide>part_article_vegetale & part_article_liquide>part_article_autre_traiteur  ~ "Majoritairement liquide",
+
+
+
+
+
+
+part_article_surgele==1 ~"Appetent uniquement surgele",
+part_article_surgele<1 & part_article_surgele>part_article_creme & part_article_surgele>part_article_bien_etre & part_article_surgele>part_article_ep_su & part_article_surgele>part_article_ep_sa &
+part_article_surgele>part_article_liquide & 
+  
+part_article_surgele>part_article_uf2 & part_article_surgele>part_article_vrac & part_article_surgele>part_article_maman_bebe &
+part_article_surgele>part_article_hors_maman_bebe &
+part_article_surgele>part_article_animaux & part_article_surgele>part_article_hors_animaux & part_article_surgele>part_article_pdt_sans & part_article_surgele>part_article_pate & part_article_surgele>part_article_boulangerie & 
+  part_article_surgele>part_article_poisson &
+part_article_surgele>part_article_viande & part_article_surgele>part_article_vegetale & part_article_surgele>part_article_autre_traiteur  ~ "Majoritairement surgele",
+
+
+
+part_article_uf2==1 ~"appetent uniquement ultras frais 2",
+part_article_uf2<1 & part_article_uf2>part_article_creme & part_article_uf2>part_article_bien_etre & part_article_uf2>part_article_ep_su & part_article_uf2>part_article_ep_sa &
+part_article_uf2>part_article_liquide & 
+  
+part_article_uf2>part_article_surgele & 
+
+part_article_uf2>part_article_vrac & part_article_uf2>part_article_maman_bebe &
+part_article_uf2>part_article_hors_maman_bebe &
+part_article_uf2>part_article_animaux & part_article_uf2>part_article_hors_animaux & part_article_uf2>part_article_pdt_sans & part_article_uf2>part_article_pate & 
+  part_article_uf2>part_article_boulangerie & 
+  part_article_uf2>part_article_poisson &
+part_article_uf2>part_article_viande & part_article_uf2>part_article_vegetale & part_article_uf2>part_article_autre_traiteur  ~ "Majoritairement uf2",
+
+part_article_vrac==1 ~"appetent uniquement vrac",
+part_article_vrac<1 & part_article_vrac>part_article_creme & part_article_vrac>part_article_bien_etre & part_article_vrac>part_article_ep_su & part_article_vrac>part_article_ep_sa &
+part_article_vrac>part_article_liquide & 
+  
+part_article_vrac>part_article_surgele & 
+
+part_article_vrac>part_article_uf2 & 
+part_article_vrac>part_article_maman_bebe &
+part_article_vrac>part_article_hors_maman_bebe &
+part_article_vrac>part_article_animaux & part_article_vrac>part_article_hors_animaux & part_article_vrac>part_article_pdt_sans & part_article_vrac>part_article_pate &
+  part_article_vrac>part_article_boulangerie & 
+  part_article_vrac>part_article_poisson &
+part_article_vrac>part_article_viande & part_article_vrac>part_article_vegetale & part_article_vrac>part_article_autre_traiteur  ~ "Majoritairement vrac",
+
+part_article_maman_bebe==1 ~"appetent uniquement maman bebe",
+part_article_maman_bebe<1 & part_article_maman_bebe>part_article_creme & part_article_maman_bebe>part_article_bien_etre & part_article_maman_bebe>part_article_ep_su & part_article_maman_bebe>part_article_ep_sa &
+part_article_maman_bebe>part_article_liquide & 
+part_article_maman_bebe>part_article_surgele & 
+part_article_maman_bebe>part_article_uf2 & 
+part_article_maman_bebe>part_article_vrac &
+  
+part_article_maman_bebe>part_article_hors_maman_bebe &
+part_article_maman_bebe>part_article_animaux & part_article_maman_bebe>part_article_hors_animaux & part_article_maman_bebe>part_article_pdt_sans & part_article_maman_bebe>part_article_pate & part_article_maman_bebe>part_article_boulangerie & 
+  part_article_maman_bebe>part_article_poisson &
+part_article_maman_bebe>part_article_viande & part_article_maman_bebe>part_article_vegetale & part_article_maman_bebe>part_article_autre_traiteur  ~ "Majoritairement maman bebe",
+
+part_article_hors_maman_bebe==1 ~"appetent uniquement hors maman bebe",
+part_article_hors_maman_bebe<1 & part_article_hors_maman_bebe>part_article_creme & part_article_hors_maman_bebe>part_article_bien_etre & part_article_hors_maman_bebe>part_article_ep_su & part_article_hors_maman_bebe>part_article_ep_sa &
+part_article_hors_maman_bebe>part_article_liquide & 
+part_article_hors_maman_bebe>part_article_surgele & 
+part_article_hors_maman_bebe>part_article_uf2 & 
+part_article_hors_maman_bebe>part_article_vrac &
+part_article_hors_maman_bebe>part_article_maman_bebe &
+  
+part_article_hors_maman_bebe>part_article_animaux & part_article_hors_maman_bebe>part_article_hors_animaux & part_article_hors_maman_bebe>part_article_pdt_sans & part_article_hors_maman_bebe>part_article_pate & part_article_hors_maman_bebe>part_article_boulangerie & 
+  part_article_hors_maman_bebe>part_article_poisson &
+part_article_hors_maman_bebe>part_article_viande & part_article_hors_maman_bebe>part_article_vegetale & part_article_hors_maman_bebe>part_article_autre_traiteur  ~ "Majoritairement hors maman bebe",
+
+
+part_article_animaux==1 ~"appetent uniquement animaux",
+part_article_animaux<1 & part_article_animaux>part_article_creme & part_article_animaux>part_article_bien_etre & part_article_animaux>part_article_ep_su & part_article_animaux>part_article_ep_sa &
+part_article_animaux>part_article_liquide & 
+part_article_animaux>part_article_surgele & 
+part_article_animaux>part_article_uf2 & 
+part_article_animaux>part_article_vrac &
+part_article_animaux>part_article_maman_bebe &
+part_article_animaux>part_article_hors_maman_bebe &
+  
+
+part_article_animaux>part_article_hors_animaux & part_article_animaux>part_article_pdt_sans & part_article_animaux>part_article_pate & 
+  part_article_animaux>part_article_boulangerie & 
+  part_article_animaux>part_article_poisson &
+part_article_animaux>part_article_viande & part_article_animaux>part_article_vegetale & part_article_animaux>part_article_autre_traiteur  ~ "Majoritairement Animaux",
+
+
+
+
+part_article_hors_animaux==1 ~"appetent uniquement hors animaux",
+part_article_hors_animaux<1 & part_article_hors_animaux>part_article_creme & part_article_hors_animaux>part_article_bien_etre & part_article_hors_animaux>part_article_ep_su & part_article_hors_animaux>part_article_ep_sa &
+part_article_hors_animaux>part_article_liquide & 
+part_article_hors_animaux>part_article_surgele & 
+part_article_hors_animaux>part_article_uf2 & 
+part_article_hors_animaux>part_article_vrac &
+part_article_hors_animaux>part_article_maman_bebe &
+part_article_hors_animaux>part_article_hors_maman_bebe &
+part_article_hors_animaux>part_article_animaux &
+part_article_hors_animaux>part_article_pdt_sans & 
+
+part_article_hors_animaux>part_article_pate &
+  part_article_hors_animaux>part_article_boulangerie & 
+  part_article_hors_animaux>part_article_poisson &
+part_article_hors_animaux>part_article_viande & part_article_hors_animaux>part_article_vegetale & part_article_hors_animaux>part_article_autre_traiteur  ~ "Majoritairement hors Animaux",
+
+
+part_article_pdt_sans==1 ~"appetent uniquement pdt sans",
+part_article_pdt_sans<1 & part_article_pdt_sans>part_article_creme & part_article_pdt_sans>part_article_bien_etre & part_article_pdt_sans>part_article_ep_su & part_article_pdt_sans>part_article_ep_sa &
+part_article_pdt_sans>part_article_liquide & 
+part_article_pdt_sans>part_article_surgele & 
+part_article_pdt_sans>part_article_uf2 & 
+part_article_pdt_sans>part_article_vrac &
+part_article_pdt_sans>part_article_maman_bebe &
+part_article_pdt_sans>part_article_hors_maman_bebe &
+part_article_pdt_sans>part_article_animaux &
+part_article_pdt_sans>part_article_hors_animaux & 
+
+part_article_pdt_sans>part_article_pate &
+
+part_article_pdt_sans>part_article_boulangerie & 
+  part_article_pdt_sans>part_article_poisson &
+part_article_pdt_sans>part_article_viande & part_article_pdt_sans>part_article_vegetale & part_article_pdt_sans>part_article_autre_traiteur  ~ "Majoritairement pdt sans",
+
+
+part_article_pate==1 ~"appetent uniquement pate",
+part_article_pate<1 & part_article_pate>part_article_creme & part_article_pate>part_article_bien_etre & part_article_pate>part_article_ep_su & part_article_pate>part_article_ep_sa &
+part_article_pate>part_article_liquide & 
+part_article_pate>part_article_surgele & 
+part_article_pate>part_article_uf2 & 
+part_article_pate>part_article_vrac &
+part_article_pate>part_article_maman_bebe &
+part_article_pate>part_article_hors_maman_bebe &
+part_article_pate>part_article_animaux &
+part_article_pate>part_article_hors_animaux & 
+
+part_article_pate>part_article_pdt_sans &
+
+part_article_pate>part_article_boulangerie & 
+  part_article_pate>part_article_poisson &
+part_article_pate>part_article_viande & part_article_pate>part_article_vegetale & part_article_pate>part_article_autre_traiteur  ~ "Majoritairement pdt sans",
+
+
+part_article_boulangerie==1 ~"appetent uniquement boulangerie",
+part_article_boulangerie<1 & part_article_boulangerie>part_article_creme & part_article_boulangerie>part_article_bien_etre & part_article_boulangerie>part_article_ep_su & part_article_boulangerie>part_article_ep_sa &
+part_article_boulangerie>part_article_liquide &
+part_article_boulangerie>part_article_surgele &
+part_article_boulangerie>part_article_uf2 &
+part_article_boulangerie>part_article_vrac &
+part_article_boulangerie>part_article_maman_bebe &
+part_article_boulangerie>part_article_hors_maman_bebe &
+part_article_boulangerie>part_article_animaux &
+part_article_boulangerie>part_article_hors_animaux &
+
+part_article_boulangerie>part_article_pdt_sans &
+
+part_article_boulangerie>part_article_pate & part_article_boulangerie>part_article_poisson &
+part_article_boulangerie>part_article_viande & part_article_boulangerie>part_article_vegetale & part_article_boulangerie>part_article_autre_traiteur  ~ "Majoritairement boulangerie",
+
+
+part_article_poisson==1 ~"Appentent poisson",
+part_article_poisson<1 & part_article_poisson>part_article_creme & part_article_poisson>part_article_bien_etre & part_article_poisson>part_article_ep_su & part_article_poisson>part_article_ep_sa &
+part_article_poisson>part_article_liquide & 
+part_article_poisson>part_article_surgele & 
+part_article_poisson>part_article_uf2 & 
+part_article_poisson>part_article_vrac &
+part_article_poisson>part_article_maman_bebe &
+part_article_poisson>part_article_hors_maman_bebe &
+part_article_poisson>part_article_animaux &
+part_article_poisson>part_article_hors_animaux & 
+part_article_poisson>part_article_pdt_sans &
+part_article_poisson>part_article_pate & 
+part_article_poisson>part_article_boulagerie &
+  
+part_article_poisson>part_article_viande &
+part_article_poisson>part_article_vegetale & part_article_poisson>part_article_autre_traiteur  ~ "Majoritairement poisson",
+
+
+
+part_article_viande==1 ~"appetent uniquement viande",
+part_article_viande<1 & part_article_viande>part_article_creme & part_article_viande>part_article_bien_etre & part_article_viande>part_article_ep_su & part_article_viande>part_article_ep_sa &
+part_article_viande>part_article_liquide & 
+part_article_viande>part_article_surgele & 
+part_article_viande>part_article_uf2 & 
+part_article_viande>part_article_vrac &
+part_article_viande>part_article_maman_bebe &
+part_article_viande>part_article_hors_maman_bebe &
+part_article_viande>part_article_animaux &
+part_article_viande>part_article_hors_animaux & 
+part_article_viande>part_article_pdt_sans &
+part_article_viande>part_article_pate & 
+part_article_viande>part_article_boulagerie &
+part_article_viande>part_article_poisson &
+
+part_article_viande>part_article_vegetale & 
+part_article_viande>part_article_autre_traiteur  ~ "Majoritairement viande",
+
+
+
+
+part_article_vegetale==1 ~"appetent uniquement vegetale",
+part_article_vegetale<1 & part_article_vegetale>part_article_creme & part_article_vegetale>part_article_bien_etre & part_article_vegetale>part_article_ep_su & part_article_vegetale>part_article_ep_sa &
+part_article_vegetale>part_article_liquide & 
+part_article_vegetale>part_article_surgele & 
+part_article_vegetale>part_article_uf2 & 
+part_article_vegetale>part_article_vrac &
+part_article_vegetale>part_article_maman_bebe &
+part_article_vegetale>part_article_hors_maman_bebe &
+part_article_vegetale>part_article_animaux &
+part_article_vegetale>part_article_hors_animaux & 
+part_article_vegetale>part_article_pdt_sans &
+part_article_vegetale>part_article_pate & 
+part_article_vegetale>part_article_boulagerie &
+part_article_vegetale>part_article_poisson &
+
+part_article_vegetale>part_article_viande & 
+part_article_vegetale>part_article_autre_traiteur  ~ "Majoritairement vegetal",
+
+
+part_article_autre_traiteur==1 ~"appetent uniquement autre traiteur",
+part_article_autre_traiteur<1 & part_article_autre_traiteur>part_article_creme & part_article_autre_traiteur>part_article_bien_etre & part_article_autre_traiteur>part_article_ep_su & part_article_autre_traiteur>part_article_ep_sa &
+part_article_autre_traiteur>part_article_liquide & 
+part_article_autre_traiteur>part_article_surgele & 
+part_article_autre_traiteur>part_article_uf2 & 
+part_article_autre_traiteur>part_article_vrac &
+part_article_autre_traiteur>part_article_maman_bebe &
+part_article_autre_traiteur>part_article_hors_maman_bebe &
+part_article_autre_traiteur>part_article_animaux &
+part_article_autre_traiteur>part_article_hors_animaux & 
+part_article_autre_traiteur>part_article_pdt_sans &
+part_article_autre_traiteur>part_article_pate & 
+part_article_autre_traiteur>part_article_boulagerie &
+part_article_autre_traiteur>part_article_poisson &
+
+part_article_autre_traiteur>part_article_viande & 
+part_article_autre_traiteur>part_article_vegetale  ~ "Majoritairement autre traiteur",
+
+TRUE  ~ 'Aucune majorite')
+               )
+```
+
+
+# Avant de discrétiser les variables essayons de voir quelles distributions ont elles. A faire 
+```{r}
+
+```
+
+
+
+#icut permet de discretiser une variable avec différente méthode avec une interface (mode click bouton)
+```{r}
+
+icut()
+
+
+
+
+## Recodage de test6$article_uf1 en test6$article_uf1_rec
+test$article_uf1_rec <- cut(test$article_uf1, include.lowest=TRUE,  right=TRUE,
+                             breaks=c(0, 1.5, 3.5, 7.5, 13.5, 21, 37))
+## Recodage de test6$article_alim en test6$article_alim_rec
+test$article_alim_rec <- cut(test$article_alim, include.lowest=TRUE,  right=TRUE,
+                              breaks=c(0, 1, 4, 8, 188))
+```
+
+
