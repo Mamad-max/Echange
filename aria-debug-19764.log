@@ -1,0 +1,8 @@
+2020-08-12 08:53:01.423|00019480|
+C:\build\aria-cpp-v1\clienttelemetry\src\SQLiteStorage.cpp(1415): int __thiscall common::SQLiteStorage::sqlite3_exec(const char *,int (__cdecl *)(void *,int,char **,char **),void *) WARNING: Failed to execute query: ALTER TABLE `packages` ADD `inflight` INTEGER; [rc=1]
+2020-08-12 08:53:01.423|00019480|
+C:\build\aria-cpp-v1\clienttelemetry\src\SQLiteStorage.cpp(1415): int __thiscall common::SQLiteStorage::sqlite3_exec(const char *,int (__cdecl *)(void *,int,char **,char **),void *) WARNING: Failed to execute query: ALTER TABLE `packages` ADD `attribs` INTEGER; [rc=1]
+2020-08-12 08:53:02.216|00018188|
+C:\build\aria-cpp-v1\clienttelemetry\src\SQLiteStorage.cpp(1415): int __thiscall common::SQLiteStorage::sqlite3_exec(const char *,int (__cdecl *)(void *,int,char **,char **),void *) WARNING: Failed to execute query: ALTER TABLE `packages` ADD `inflight` INTEGER; [rc=1]
+2020-08-12 08:53:02.216|00018188|
+C:\build\aria-cpp-v1\clienttelemetry\src\SQLiteStorage.cpp(1415): int __thiscall common::SQLiteStorage::sqlite3_exec(const char *,int (__cdecl *)(void *,int,char **,char **),void *) WARNING: Failed to execute query: ALTER TABLE `packages` ADD `attribs` INTEGER; [rc=1]
